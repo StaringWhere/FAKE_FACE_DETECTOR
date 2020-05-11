@@ -87,19 +87,26 @@ def crop(img):
     #d = detected_faces[0].rect
     left = d.left(); right = d.right(); top = d.top(); bottom = d.bottom()
 
-    #计算中心坐标和新的size
-    old_size = (right - left + bottom - top)/2
-    center = np.array([right - (right - left) / 2.0, bottom - (bottom - top) / 2.0])
-    size = int(old_size*1.3)
+    if left < 0 or right < 0 or top < 0 or bottom < 0:
+        print('warning: part of face in image')
+        return None
 
-    new_left = int(center[0] - size/2)
-    new_right = int(center[0] + size/2)
-    new_top = int(center[1] + size/2)
-    new_bottom = int(center[1] - size/2)
 
-    loc = [new_bottom, new_top, new_left, new_right]
+    # 计算中心坐标和新的size
+    # old_size = (right - left + bottom - top)/2
+    # center = np.array([right - (right - left) / 2.0, bottom - (bottom - top) / 2.0])
+    # size = int(old_size*1.3)
+
+    # new_left = int(center[0] - size/2)
+    # new_right = int(center[0] + size/2)
+    # new_top = int(center[1] + size/2)
+    # new_bottom = int(center[1] - size/2)
+
+    # loc = [new_bottom, new_top, new_left, new_right]
+    loc = [top, bottom, left, right]
     #裁切并保存
-    cropped_img = img[new_bottom:new_top, new_left:new_right, :]
+    # cropped_img = img[new_bottom:new_top, new_left:new_right, :]
+    cropped_img = img[top:bottom, left:right, :]
     return cropped_img, loc
 
 def get_depth(img):
@@ -138,8 +145,40 @@ def get_mask(img):
                 mask[i][j]=255
     return mask
 
+# def get_mask(img):
+
+#     # 获取人脸边框
+#     detector = dlib.get_frontal_face_detector()
+#     detected_faces = detector(img)
+#     # 是否检测到人脸
+#     if len(detected_faces) == 0:
+#         print('warning: no detected face')
+#         return None
+#     d = detected_faces[0]
+#     left = d.left(); right = d.right(); top = d.top(); bottom = d.bottom()
+#     # 人脸是否完整
+#     if left < 0 or right < 0 or top < 0 or bottom < 0:
+#         print('warning: part of face in image')
+#         return None
+#     # 边框坐标
+#     loc = [top, bottom, left, right]
+
+#     # 获取人脸检测点
+#     predictor_path = 'shape_predictor_81_face_landmarks.dat'
+#     predictor = dlib.shape_predictor(predictor_path)
+#     shape = predictor(img, d)
+#     landmarks = np.matrix([[p.x, p.y] for p in shape.parts()])
+
+#     #裁切并保存
+#     cropped_img = img[top:bottom, left:right, :]
+#     return cropped_img, loc
+
 def preprocess(depth_img, IR_img, aligned_img):
-    cropped_aligned, location = crop(aligned_img)
+    try:
+        cropped_aligned, location = crop(aligned_img)
+    except TypeError:
+        return None
+
     cropped_depth = depth_img[location[0]:location[1], location[2]:location[3], :]
     cropped_IR = IR_img[location[0]:location[1], location[2]:location[3], :]
 
@@ -150,5 +189,3 @@ def preprocess(depth_img, IR_img, aligned_img):
     masked_IR = np.where(aligned_bin_mask[:,:,np.newaxis] == 0, 0, cropped_IR)
 
     return masked_depth, masked_IR
-
-

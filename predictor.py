@@ -28,7 +28,7 @@ class resfcn256(object):
         self.resolution_op = resolution_op
 
     def __call__(self, x, is_training = True):
-        with tf.variable_scope(self.name) as scope:
+        with tf.variable_scope(self.name, reuse=tf.AUTO_REUSE) as scope:
             with arg_scope([tcl.batch_norm], is_training=is_training, scale=True):
                 with arg_scope([tcl.conv2d, tcl.conv2d_transpose], activation_fn=tf.nn.relu, 
                                      normalizer_fn=tcl.batch_norm, 

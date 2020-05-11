@@ -5,3 +5,6 @@
 /.vscode/
 256_256_resfcn256_weight.data-00000-of-00001
 256_256_resfcn256_weight.index
+/imgs/
+/speed_test/
+shape_predictor_81_face_landmarks.dat
