@@ -8,3 +8,9 @@
 /imgs/
 /speed_test/
 shape_predictor_81_face_landmarks.dat
+filelist.py
+filelist.txt
+notebook.ipynb
+time_cpu.txt
+time_gpu.txt
+time.txt

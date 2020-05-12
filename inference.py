@@ -52,12 +52,13 @@ def check_spoofing(image, isIR=False):
 
 def check(depth_img, ir_img):
 	fake_prob1 = check_spoofing(depth_img)
+	fake_prob2 = check_spoofing(ir_img, isIR=True)
+	print(fake_prob1, fake_prob2)
 	if(fake_prob1>=0.7):
 		return 0
 	elif(fake_prob1<=0.3):
 		return 1
 	else:
-		fake_prob2 = check_spoofing(ir_img, isIR=True)
 		if(fake_prob2>0.5):
 			return 0
 		else:
