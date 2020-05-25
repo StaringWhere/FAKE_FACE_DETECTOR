@@ -66,37 +66,40 @@ align = rs.align(align_to)
 
 count = 0
 ispause = 0
-#用于推理判断的图片
+# 用于推理判断的图片
 inf_images = None
 
-#扫描速度
+# 扫描速度
 v = 2
-#初始y坐标
+# 初始y坐标
 y = 0
-#初始方向：1表示向下,-1表示向上
+# 初始方向：1表示向下,-1表示向上
 turn = 1
 
-#是否结束
+# 是否结束
 isFinish = 0
 def bgrun(depth_img, ir_img, aligned_img):
     global isFinish
     text.set('WORKING...')
-    masked_depth, masked_ir = preprocess(depth_img, ir_img, aligned_img)
-    masked_depth = Image.fromarray(masked_depth)
-    masked_ir = Image.fromarray(masked_ir)
-    res = check(masked_depth, masked_ir)
-    isFinish = 1
-    if(res==0):
-        result.config(fg='red')
-        text.set('FAKE')
-    else:
-        result.config(fg='green')
-        text.set('REAL')
-
+    try:
+        masked_depth, masked_ir = preprocess(depth_img, ir_img, aligned_img)
+        masked_depth = Image.fromarray(masked_depth)
+        masked_ir = Image.fromarray(masked_ir)
+        res = check(masked_depth, masked_ir)
+        isFinish = 1
+        if(res==0):
+            result.config(fg='red')
+            text.set('FAKE')
+        else:
+            result.config(fg='green')
+            text.set('REAL')
+    except TypeError:
+        result.config(fg='yellow')
+        text.set('FACE NOT DETECTED')
 
 def play():
     global pipeline,count,inference,inf_images,ispause,y,turn,isFinish
-    #判断是否暂停
+    # 判断是否暂停
     if ispause:
         return
     # 获取帧
@@ -123,7 +126,7 @@ def play():
 
     color_rgb = cv2.cvtColor(color_image, cv2.COLOR_BGR2RGB)
     color_resized = cv2.resize(color_rgb,(400, 320))
-    #添加扫描线
+    # 添加扫描线
     if(isFinish==0):
         if y==0:
             turn = 1
@@ -131,7 +134,7 @@ def play():
             turn = -1
         y = y + turn*v
         color_resized = cv2.line(color_resized, (0,int(y)), (400,int(y)), (0,180,0), 2)
-    #绘制在界面上
+    # 绘制在界面上
     colortk = ImageTk.PhotoImage(image=Image.fromarray(color_resized))
     main_panel.imgtk = colortk
     main_panel.config(image=colortk)
@@ -155,12 +158,11 @@ def play():
 
     # 保存要处理的帧
     if count == 30:
-        #count = 0
         t= th.Thread(target=bgrun,args=(depth_image_colormap, infrared_image_3d, aligned_color_image))#创建线程
-        t.setDaemon(True)#设置为后台线程，这里默认是False，设置为True之后则主线程不用等待子线程
+        t.setDaemon(True)# 设置为后台线程，这里默认是False，设置为True之后则主线程不用等待子线程
         t.start()
     #只测试一次
-    if count==62:
+    if count==60:
         count = 31
 
     aligned_color_rgb = cv2.cvtColor(aligned_color_image, cv2.COLOR_BGR2RGB)
@@ -181,7 +183,7 @@ def play():
     minor_panel.config(image=imgstk)
     window.after(1, play)
     
-#开始
+# 开始
 def onStart():
     content.config(state='normal')
     content.insert('end', 'Loading video stream from camera...\n')
@@ -189,7 +191,7 @@ def onStart():
     play()
     start.config(state='disabled')
 
-#暂停
+# 暂停
 def onPause():
     content.config(state='normal')
     content.insert('end', 'Pause video stream\n')
@@ -197,23 +199,28 @@ def onPause():
     global ispause
     ispause = 1
 
-#继续
+# 继续
 def onProceed():
     content.config(state='normal')
     content.insert('end', 'Continue video stream\n')
     content.config(state='disabled')
-    global ispause
-    ispause = 0
-    play()
+    global ispause,count,isFinish
+    count = 0
+    isFinish = 0
+    result.config(fg='black')
+    text.set('')
 
+    if ispause == 1:
+        ispause = 0
+        play()
 
-#创建窗口
+# 创建窗口
 window = tk.Tk()
 window.title('FAKE FACE DETECTOR')
 window.minsize(1400, 800)
 window.maxsize(1400, 800)
 
-#GUI界面设计
+# GUI界面设计
 subWin1 = tk.Frame(window, width=700, height=500)
 subWin2 = tk.Frame(window, width=700, height=500)
 subWin3 = tk.Frame(window, width=1400, height=300)
@@ -229,7 +236,7 @@ main_panel.place(x=150, y=20, width=400, height=320)
 minor_panel = tk.Label(subWin2, relief='ridge')  
 minor_panel.place(x=30, y=10, width=640, height=480)
 
-text = tk.StringVar()  
+text = tk.StringVar()
 result = tk.Label(subWin1, textvariable=text, font=('Times', 25, 'bold'), relief='sunken')
 result.place(x=240, y=370, width=200, height=50)
 start = tk.Button(subWin1, text="start", font=('Helvetica', 20), command=onStart,  relief='raised')
@@ -246,5 +253,5 @@ scroll.place(x=1360, y=10, height=280, width=20)
 scroll.config(command=content.yview)
 content.config(yscrollcommand=scroll.set)
 
-#窗口主循环
+# 窗口主循环
 window.mainloop()
